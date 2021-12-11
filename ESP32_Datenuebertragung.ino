@@ -1,11 +1,14 @@
 const int PROTOCOL_INPUT_PIN = 25;
 const int PROTOCOL_OUTPUT_PIN = 27;
+const int device_id = 1;
 
 const int TIME_PAUSE = 5;
 const int TIME_START = 15;
 const int TIME_END = 20;
 const int TIME_NEXT_VALUE = 10;
 const int TIME_VALUE = 5;
+
+const int MAX_DATAGRAMMS_WAITING = 10;
 
 boolean last_state = false;
 int last_state_start = 0;
@@ -120,7 +123,7 @@ DatagrammListNode DatagrammListNode::deleteNext(){
 
 void DatagrammListNode::add(Datagramm newDatagramm){
   if(next == null){
-    next =  new DatagrammListNode(newDatagramm);
+    next = DatagrammListNode(newDatagramm);
   }else{
     return next.add();  
   }
@@ -133,23 +136,23 @@ class DatagrammList{
     boolean isAvailable();
     Datagramm getNext();
   private:
-    Datagramm dataSend[10];   
+    Datagramm dataSend[MAX_DATAGRAMMS_WAITING];   
 };
 
 DatagrammList::DatagrammList(){ 
-  for(int i=1; i < sizeof(dataSend); i++){
-    dataSend[i] = new Datagramm();
+  for(int i=0; i < MAX_DATAGRAMMS_WAITING; i++){
+    dataSend[i] = Datagramm();
   }
 }
 
 void DatagrammList::add(Datagramm newDatagramm){
   boolean added = false;
-  for(int i=0; i < sizeof(dataSend); i++){
+  for(int i=0; i < MAX_DATAGRAMMS_WAITING; i++){
     if((dataSend[i].hasData()) && (!added)){
       dataSend[i] = newDatagramm;
       added = true;
     }else if(added){
-      dataSend[i] = new Datagramm(); 
+      dataSend[i] = Datagramm(); 
     }
   }
 }
@@ -157,27 +160,27 @@ void DatagrammList::add(Datagramm newDatagramm){
 Datagramm DatagrammList::getNext(){
   if(isAvailable()){
     Datagramm data = dataSend[0];
-    for(int i=1; i < sizeof(dataSend); i++){
+    for(int i=1; i < MAX_DATAGRAMMS_WAITING; i++){
       dataSend[i-1] = dataSend[i];
     }
     return data; 
   }else{
-    return new Datagramm();
+    return Datagramm();
   }
 }
 
 boolean DatagrammList::isAvailable(){
-  return dataSend[0] != new Datagramm();
+  return dataSend[0].hasData();
 }
 
-Datagramm receivedData = new Datagramm();
-DatagrammList dataToSend = new DatagrammList();
+Datagramm receivedData = Datagramm();
+DatagrammList dataToSend = DatagrammList();
 
 void delayAndReceive(int duration){
   int start = millis();
 
   while(millis()-start < duration){
-    receive()  
+    receive();
   }
 }
 
@@ -188,12 +191,12 @@ void receive(){
     dataAvailable = true;  
     last_state = true; 
     last_state_start = millis(); 
-    receivedData = new Datagramm();
-  }else if((last_state != state_input)){
+    receivedData = Datagramm();
+  }else if((last_state != state_input) && dataAvailable){
     int duration = millis()-last_state_start;
     if (!receivedData.receive(last_state, duration)){
-      dataAvailable = false;    
-      dataToSend.add(receivedData);
+      dataAvailable = false;  
+      processData(receivedData);
     }
     last_state = state_input; 
     last_state_start = millis(); 
@@ -202,6 +205,33 @@ void receive(){
     dataAvailable = false;  
     dataToSend.add(receivedData);
   }
+
+  if(Serial.available() > 0){
+    String input_serial = Serial.readStringUntil('\n');
+    String input_text = "";
+
+    for(int i=0; i < sizeof(input_serial); i++){
+      char curChar = input_serial[i];
+
+      if(curChar == ' '){
+          
+      }else{
+        input_text = input_text + curChar;  
+      }
+    }
+  }
+}
+
+void processData(Datagramm data_input){
+  if(receivedData.getAddr() == device_id){  
+    readData(receivedData.getSender(), receivedData.getPacklength());
+  }else{
+    dataToSend.add(receivedData);    
+  }
+}
+
+void readData(int _sender, int _packet){
+  
 }
 
 void send_pause(){
@@ -233,8 +263,10 @@ void setup() {
   pinMode(PROTOCOL_INPUT_PIN, INPUT_PULLUP);
   pinMode(PROTOCOL_OUTPUT_PIN, OUTPUT);
   for(int i=0; i < 20; i++){
-    dataToSend.add(new Datagramm(3, 3, 10));   
+    dataToSend.add(Datagramm(3, 3, 10));   
   } 
+
+  Serial.begin(9600);
 }
 
 void loop() {

@@ -1,3 +1,6 @@
+//created by Freaki_N
+//Last Update: 12.12.2021
+
 const int PROTOCOL_INPUT_PIN = 25;
 const int PROTOCOL_OUTPUT_PIN = 27;
 const int device_id = 1;
@@ -37,12 +40,12 @@ class Datagramm{
       int sender;
       int addr;
       int packet_length;
-      int state;  
-      int state_send;    
+      int state;
+      int state_send;
       int time_last_send;
       int time_stop_sending;
-      boolean last_state_sending; 
-      void set_value();   
+      boolean last_state_sending;
+      void set_value();
       void set_next_value();
       void set_end();
       void set_start();
@@ -56,7 +59,7 @@ Datagramm::Datagramm(int _sender, int _addr, int _packet_length){
   packet_length = _packet_length;
   state = 3;
   state_send = -1;
-}  
+}
 
 Datagramm::Datagramm(){
   sender = 0;
@@ -64,10 +67,10 @@ Datagramm::Datagramm(){
   packet_length = 0;
   state = 0;
   state_send = -1;
-}  
+}
 
 boolean Datagramm::isSending(){
-  return onSending;  
+  return onSending;
 }
 
 boolean Datagramm::hasData(){
@@ -75,11 +78,11 @@ boolean Datagramm::hasData(){
 }
 
 void Datagramm::end(){
-  state = 3; 
+  state = 3;
 }
 
 boolean Datagramm::checkBool(int timeBefore, int timeNext, int timeCur, int statusTime){
-  return timeCur-((timeCur-timeBefore)/2) < statusTime && timeCur+((timeNext-timeCur)/2) > statusTime;  
+  return timeCur-((timeCur-timeBefore)/2) < statusTime && timeCur+((timeNext-timeCur)/2) > statusTime;
 }
 
 boolean Datagramm::receive(boolean state, int duration){
@@ -92,20 +95,20 @@ boolean Datagramm::receive(boolean state, int duration){
           addr++;
         }else if(state == 0){
           packet_length++;
-        }  
+        }
       }else if(checkBool(TIME_VALUE, TIME_START, TIME_NEXT_VALUE, duration)){
-        state++;     
+        state++;
       }else if(checkBool(TIME_NEXT_VALUE, TIME_END, TIME_START, duration)){
         sender = 0;
         addr = 0;
         packet_length = 0;
-        state = 0;   
+        state = 0;
       }else if(checkBool(TIME_START, TIME_END+10, TIME_END, duration)){
-        state = 3;     
+        state = 3;
       }
     }
   }else if(duration > TIME_PAUSE+5){
-    state = 3;  
+    state = 3;
   }
   return state < 3;
 }
@@ -115,11 +118,11 @@ int Datagramm::getAddr(){
 }
 
 int Datagramm::getSender(){
-  return sender; 
+  return sender;
 }
 
 int Datagramm::getPacklength(){
-  return packet_length;  
+  return packet_length;
 }
 
 void Datagramm::startSending(){
@@ -131,80 +134,80 @@ void Datagramm::startSending(){
 
   /*
    * Sending states:
-   * 
-   * 0: 
+   *
+   * 0:
    */
-}  
+}
 
 void Datagramm::send(){
   if(millis() >= time_stop_sending){
     if(last_state_sending == true){
-      set_pause();  
-    }  
+      set_pause();
+    }
 
     if(last_state_sending == false){
         switch(state_send){
           case 0: if(sender > 0){
-                state_send++; 
+                state_send++;
                 set_value();
                 sender--;
              }else{
                 state_send + 2;
-                set_next_value(); 
+                set_next_value();
              }
              break;
-             
+
           case 1: if(sender > 0){
                 set_value();
-                sender--;     
+                sender--;
              }else{
-                set_next_value(); 
-                state_send++; 
+                set_next_value();
+                state_send++;
              }
             break;
-          
+
           case 2: if(addr > 0){
-                state_send++; 
+                state_send++;
                 set_value();
                 addr--;
              }else{
                 state_send + 2;
-                set_next_value(); 
+                set_next_value();
              }
              break;
-             
+
           case 3: if(addr > 0){
                 set_value();
-                addr--;     
+                addr--;
              }else{
-                set_next_value(); 
-                state_send++;  
+                set_next_value();
+                state_send++;
              }
             break;
-          
+
           case 4: if(packet_length > 0){
-                state_send++; 
+                state_send++;
                 set_value();
                 packet_length--;
              }else{
                 state_send + 2;
-                set_end(); 
+                set_end();
              }
              break;
-             
+
           case 5: if(packet_length > 0){
                 set_value();
-                packet_length--;     
+                packet_length--;
              }else{
-                set_end(); 
-                state_send++;  
+                set_end();
+                state_send++;
              }
             break;
-          
-          case 6: state_send++; onSending = false; break;  
+
+          case 6: state_send++; onSending = false; break;
 
           default: break;
-        }            
+        }
     }
   }
 }
@@ -212,7 +215,7 @@ void Datagramm::send(){
 void Datagramm::set_pause(){
   time_last_send = millis();
   time_stop_sending = time_last_send + TIME_PAUSE;
-  last_state_sending = false;  
+  last_state_sending = false;
   digitalWrite(PROTOCOL_OUTPUT_PIN, LOW);
 }
 
@@ -257,22 +260,22 @@ void Datagramm::set_value(){
 };
 
 DatagrammListNode::DatagrammListNode(Datagramm _datagramm){
-  datagramm = _datagramm; 
+  datagramm = _datagramm;
 }
 
 Datagramm DatagrammListNode::getDatagramm(){
-  return datagramm; 
+  return datagramm;
 }
 
 DatagrammListNode DatagrammListNode::deleteNext(){
-  return next; 
+  return next;
 }
 
 void DatagrammListNode::add(Datagramm newDatagramm){
   if(next == null){
     next = DatagrammListNode(newDatagramm);
   }else{
-    return next.add();  
+    return next.add();
   }
 }*/
 
@@ -283,10 +286,10 @@ class DatagrammList{
     boolean isAvailable();
     Datagramm getNext();
   private:
-    Datagramm dataSend[MAX_DATAGRAMMS_WAITING];   
+    Datagramm dataSend[MAX_DATAGRAMMS_WAITING];
 };
 
-DatagrammList::DatagrammList(){ 
+DatagrammList::DatagrammList(){
   for(int i=0; i < MAX_DATAGRAMMS_WAITING; i++){
     dataSend[i] = Datagramm();
   }
@@ -299,7 +302,7 @@ void DatagrammList::add(Datagramm newDatagramm){
       dataSend[i] = newDatagramm;
       added = true;
     }else if(added){
-      dataSend[i] = Datagramm(); 
+      dataSend[i] = Datagramm();
     }
   }
 }
@@ -310,7 +313,7 @@ Datagramm DatagrammList::getNext(){
     for(int i=1; i < MAX_DATAGRAMMS_WAITING; i++){
       dataSend[i-1] = dataSend[i];
     }
-    return data; 
+    return data;
   }else{
     return Datagramm();
   }
@@ -335,32 +338,32 @@ void delayAndReceive(int duration){
 
 void sendData(){
   if(sendingData.isSending()){
-    sendingData.send();  
+    sendingData.send();
   }else if(dataToSend.isAvailable()){
-    sendingData = dataToSend.getNext(); 
+    sendingData = dataToSend.getNext();
     sendingData.startSending();
-  }  
+  }
 }
 
 void receive(){
   boolean state_input = (digitalRead(PROTOCOL_INPUT_PIN) == LOW);
 
   if(state_input && !dataAvailable){
-    dataAvailable = true;  
-    last_state = true; 
-    last_state_start = millis(); 
+    dataAvailable = true;
+    last_state = true;
+    last_state_start = millis();
     receivedData = Datagramm();
   }else if((last_state != state_input) && dataAvailable){
     int duration = millis()-last_state_start;
     if (!receivedData.receive(last_state, duration)){
-      dataAvailable = false;  
+      dataAvailable = false;
       processData(receivedData);
     }
-    last_state = state_input; 
-    last_state_start = millis(); 
+    last_state = state_input;
+    last_state_start = millis();
   }else if(!state_input && millis()-last_state_start >= 40 && dataAvailable){
     receivedData.end();
-    dataAvailable = false;  
+    dataAvailable = false;
     dataToSend.add(receivedData);
   }
 
@@ -372,28 +375,28 @@ void receive(){
       char curChar = input_serial[i];
 
       if(curChar == ' '){
-          
+
       }else{
-        input_text = input_text + curChar;  
+        input_text = input_text + curChar;
       }
     }
   }
 }
 
 void processData(Datagramm data_input){
-  if(receivedData.getAddr() == device_id){  
+  if(receivedData.getAddr() == device_id){
     readData(receivedData.getSender(), receivedData.getPacklength());
   }else{
-    dataToSend.add(receivedData);    
+    dataToSend.add(receivedData);
   }
 }
 
 void readData(int _sender, int _packet){
   if(_packet == 1){
-    digitalWrite(LED_PIN_1, HIGH);    
+    digitalWrite(LED_PIN_1, HIGH);
   }else if(_packet == 2){
-    digitalWrite(LED_PIN_1, LOW);        
-  }    
+    digitalWrite(LED_PIN_1, LOW);
+  }
 }
 
 void send_pause(){
@@ -423,14 +426,14 @@ void send_value(){
 
 /*void sendDatagramm(){
   if(dataToSend.isAvailable()){
-    Datagramm sendingData = dataToSend.getNext();   
+    Datagramm sendingData = dataToSend.getNext();
     int sender = sendingData.getSender();
     int addr = sendingData.getAddr();
     int packet_length = sendingData.getPacklength();
-    
+
     send_start();
     send_pause();
-  
+
     for(int i=0; i < sender; i++){
         send_value();
         send_pause();
@@ -438,20 +441,20 @@ void send_value(){
 
     send_pause();
     send_next_value();
-  
+
     for(int i=0; i < addr; i++){
         send_value();
-        send_pause(); 
+        send_pause();
     }
 
     send_pause();
     send_next_value();
-      
+
     for(int i=0; i < packet_length; i++){
         send_value();
         send_pause();
     }
-    
+
     send_end();
   }
 }*/
@@ -462,8 +465,8 @@ void setup() {
   pinMode(BUTTON_PIN_1, INPUT_PULLUP);
   pinMode(LED_PIN_1, OUTPUT);
   for(int i=0; i < 20; i++){
-    dataToSend.add(Datagramm(3, 3, 10));   
-  } 
+    dataToSend.add(Datagramm(3, 3, 10));
+  }
 
   Serial.begin(9600);
 }
@@ -473,7 +476,7 @@ void loop() {
   sendData();
 
   if((digitalRead(BUTTON_PIN_1) == LOW) && (digitalRead(BUTTON_PIN_1) == LOW) != Button_1_state){
- 
+
   }
-  Button_1_state = (digitalRead(BUTTON_PIN_1) == LOW);  
+  Button_1_state = (digitalRead(BUTTON_PIN_1) == LOW);
 }

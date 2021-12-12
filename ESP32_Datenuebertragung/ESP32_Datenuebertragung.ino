@@ -5,13 +5,13 @@ const int PROTOCOL_INPUT_PIN = 25;
 const int PROTOCOL_OUTPUT_PIN = 27;
 const int device_id = 1;
 
-const int TIME_PAUSE = 5;
+const int TIME_PAUSE = 2;
 const int TIME_START = 15;
 const int TIME_END = 20;
 const int TIME_NEXT_VALUE = 10;
-const int TIME_VALUE = 5;
+const int TIME_VALUE = 2;
 
-const int MAX_DATAGRAMMS_WAITING = 10;
+const int MAX_DATAGRAMMS_WAITING = 20;
 
 const int LED_PIN_1 = 21;
 
@@ -81,7 +81,11 @@ void Datagramm::end(){
   state = 3;
 }
 
-boolean Datagramm::checkBool(int timeBefore, int timeNext, int timeCur, int statusTime){
+boolean Datagramm::checkBool(int _timeBefore, int _timeNext, int _timeCur, int _statusTime){
+  int timeBefore = _timeBefore/1.0;
+  int timeNext = _timeNext/1.0;
+  int timeCur = _timeCur/1.0;
+  int statusTime  = _statusTime/1.0;
   return timeCur-((timeCur-timeBefore)/2) < statusTime && timeCur+((timeNext-timeCur)/2) > statusTime;
 }
 
@@ -152,7 +156,7 @@ void Datagramm::send(){
                 set_value();
                 sender--;
              }else{
-                state_send + 2;
+                state_send = state_send + 2;
                 set_next_value();
              }
              break;
@@ -171,7 +175,7 @@ void Datagramm::send(){
                 set_value();
                 addr--;
              }else{
-                state_send + 2;
+                state_send = state_send + 2;
                 set_next_value();
              }
              break;
@@ -190,7 +194,7 @@ void Datagramm::send(){
                 set_value();
                 packet_length--;
              }else{
-                state_send + 2;
+                state_send = state_send + 2;
                 set_end();
              }
              break;
@@ -217,6 +221,7 @@ void Datagramm::set_pause(){
   time_stop_sending = time_last_send + TIME_PAUSE;
   last_state_sending = false;
   digitalWrite(PROTOCOL_OUTPUT_PIN, LOW);
+  Serial.println("Sending Pause: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 void Datagramm::set_start(){
@@ -224,6 +229,7 @@ void Datagramm::set_start(){
   time_stop_sending = time_last_send + TIME_START;
   last_state_sending = true;
   digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
+  Serial.println("Sending Start: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 void Datagramm::set_end(){
@@ -231,6 +237,7 @@ void Datagramm::set_end(){
   time_stop_sending = time_last_send + TIME_END;
   last_state_sending = true;
   digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
+  Serial.println("Sending End: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 void Datagramm::set_next_value(){
@@ -238,6 +245,7 @@ void Datagramm::set_next_value(){
   time_stop_sending = time_last_send + TIME_NEXT_VALUE;
   last_state_sending = true;
   digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
+  Serial.println("Sending Next Value: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 void Datagramm::set_value(){
@@ -245,6 +253,7 @@ void Datagramm::set_value(){
   time_stop_sending = time_last_send + TIME_VALUE;
   last_state_sending = true;
   digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
+  Serial.println("Sending Value: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 
@@ -298,7 +307,7 @@ DatagrammList::DatagrammList(){
 void DatagrammList::add(Datagramm newDatagramm){
   boolean added = false;
   for(int i=0; i < MAX_DATAGRAMMS_WAITING; i++){
-    if((dataSend[i].hasData()) && (!added)){
+    if((!dataSend[i].hasData()) && (!added)){
       dataSend[i] = newDatagramm;
       added = true;
     }else if(added){
@@ -464,9 +473,10 @@ void setup() {
   pinMode(PROTOCOL_OUTPUT_PIN, OUTPUT);
   pinMode(BUTTON_PIN_1, INPUT_PULLUP);
   pinMode(LED_PIN_1, OUTPUT);
-  for(int i=0; i < 20; i++){
+  /*for(int i=0; i < 3; i++){
     dataToSend.add(Datagramm(3, 3, 10));
-  }
+  }*/
+  dataToSend.add(Datagramm(device_id, 0, 1));
 
   Serial.begin(9600);
 }

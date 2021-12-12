@@ -10,6 +10,11 @@ const int TIME_VALUE = 5;
 
 const int MAX_DATAGRAMMS_WAITING = 10;
 
+const int LED_PIN_1 = 21;
+
+const int BUTTON_PIN_1 = 22;
+boolean Button_1_state = false;
+
 boolean last_state = false;
 int last_state_start = 0;
 boolean dataAvailable = false;
@@ -24,12 +29,25 @@ class Datagramm{
       boolean receive(boolean state, int duration);
       boolean hasData();
       void end();
+      void startSending();
+      void send();
+      boolean isSending();
     private:
       boolean checkBool(int timeBefore, int timeNext, int timeCur, int statusTime);
       int sender;
       int addr;
       int packet_length;
-      int state;     
+      int state;  
+      int state_send;    
+      int time_last_send;
+      int time_stop_sending;
+      boolean last_state_sending; 
+      void set_value();   
+      void set_next_value();
+      void set_end();
+      void set_start();
+      void set_pause();
+      boolean onSending;
 };
 
 Datagramm::Datagramm(int _sender, int _addr, int _packet_length){
@@ -37,6 +55,7 @@ Datagramm::Datagramm(int _sender, int _addr, int _packet_length){
   addr = _addr;
   packet_length = _packet_length;
   state = 3;
+  state_send = -1;
 }  
 
 Datagramm::Datagramm(){
@@ -44,7 +63,12 @@ Datagramm::Datagramm(){
   addr = 0;
   packet_length = 0;
   state = 0;
+  state_send = -1;
 }  
+
+boolean Datagramm::isSending(){
+  return onSending;  
+}
 
 boolean Datagramm::hasData(){
   return !(sender == 0 && addr == 0 && packet_length == 0 && state == 0);
@@ -97,6 +121,129 @@ int Datagramm::getSender(){
 int Datagramm::getPacklength(){
   return packet_length;  
 }
+
+void Datagramm::startSending(){
+  state_send = 0;
+  state = 3;
+  last_state_sending = false;
+  onSending = true;
+  set_start();
+
+  /*
+   * Sending states:
+   * 
+   * 0: 
+   */
+}  
+
+void Datagramm::send(){
+  if(millis() >= time_stop_sending){
+    if(last_state_sending == true){
+      set_pause();  
+    }  
+
+    if(last_state_sending == false){
+        switch(state_send){
+          case 0: if(sender > 0){
+                state_send++; 
+                set_value();
+                sender--;
+             }else{
+                state_send + 2;
+                set_next_value(); 
+             }
+             break;
+             
+          case 1: if(sender > 0){
+                set_value();
+                sender--;     
+             }else{
+                set_next_value(); 
+                state_send++; 
+             }
+            break;
+          
+          case 2: if(addr > 0){
+                state_send++; 
+                set_value();
+                addr--;
+             }else{
+                state_send + 2;
+                set_next_value(); 
+             }
+             break;
+             
+          case 3: if(addr > 0){
+                set_value();
+                addr--;     
+             }else{
+                set_next_value(); 
+                state_send++;  
+             }
+            break;
+          
+          case 4: if(packet_length > 0){
+                state_send++; 
+                set_value();
+                packet_length--;
+             }else{
+                state_send + 2;
+                set_end(); 
+             }
+             break;
+             
+          case 5: if(packet_length > 0){
+                set_value();
+                packet_length--;     
+             }else{
+                set_end(); 
+                state_send++;  
+             }
+            break;
+          
+          case 6: state_send++; onSending = false; break;  
+
+          default: break;
+        }            
+    }
+  }
+}
+
+void Datagramm::set_pause(){
+  time_last_send = millis();
+  time_stop_sending = time_last_send + TIME_PAUSE;
+  last_state_sending = false;  
+  digitalWrite(PROTOCOL_OUTPUT_PIN, LOW);
+}
+
+void Datagramm::set_start(){
+  time_last_send = millis();
+  time_stop_sending = time_last_send + TIME_START;
+  last_state_sending = true;
+  digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
+}
+
+void Datagramm::set_end(){
+  time_last_send = millis();
+  time_stop_sending = time_last_send + TIME_END;
+  last_state_sending = true;
+  digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
+}
+
+void Datagramm::set_next_value(){
+  time_last_send = millis();
+  time_stop_sending = time_last_send + TIME_NEXT_VALUE;
+  last_state_sending = true;
+  digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
+}
+
+void Datagramm::set_value(){
+  time_last_send = millis();
+  time_stop_sending = time_last_send + TIME_VALUE;
+  last_state_sending = true;
+  digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
+}
+
 
 /*class DatagrammListNode{
   public:
@@ -174,6 +321,7 @@ boolean DatagrammList::isAvailable(){
 }
 
 Datagramm receivedData = Datagramm();
+Datagramm sendingData = Datagramm();
 DatagrammList dataToSend = DatagrammList();
 
 void delayAndReceive(int duration){
@@ -181,7 +329,17 @@ void delayAndReceive(int duration){
 
   while(millis()-start < duration){
     receive();
+    sendData();
   }
+}
+
+void sendData(){
+  if(sendingData.isSending()){
+    sendingData.send();  
+  }else if(dataToSend.isAvailable()){
+    sendingData = dataToSend.getNext(); 
+    sendingData.startSending();
+  }  
 }
 
 void receive(){
@@ -231,7 +389,11 @@ void processData(Datagramm data_input){
 }
 
 void readData(int _sender, int _packet){
-  
+  if(_packet == 1){
+    digitalWrite(LED_PIN_1, HIGH);    
+  }else if(_packet == 2){
+    digitalWrite(LED_PIN_1, LOW);        
+  }    
 }
 
 void send_pause(){
@@ -259,18 +421,7 @@ void send_value(){
   delayAndReceive(TIME_VALUE);
 }
 
-void setup() {
-  pinMode(PROTOCOL_INPUT_PIN, INPUT_PULLUP);
-  pinMode(PROTOCOL_OUTPUT_PIN, OUTPUT);
-  for(int i=0; i < 20; i++){
-    dataToSend.add(Datagramm(3, 3, 10));   
-  } 
-
-  Serial.begin(9600);
-}
-
-void loop() {
-  receive();
+/*void sendDatagramm(){
   if(dataToSend.isAvailable()){
     Datagramm sendingData = dataToSend.getNext();   
     int sender = sendingData.getSender();
@@ -303,4 +454,26 @@ void loop() {
     
     send_end();
   }
+}*/
+
+void setup() {
+  pinMode(PROTOCOL_INPUT_PIN, INPUT_PULLUP);
+  pinMode(PROTOCOL_OUTPUT_PIN, OUTPUT);
+  pinMode(BUTTON_PIN_1, INPUT_PULLUP);
+  pinMode(LED_PIN_1, OUTPUT);
+  for(int i=0; i < 20; i++){
+    dataToSend.add(Datagramm(3, 3, 10));   
+  } 
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  receive();
+  sendData();
+
+  if((digitalRead(BUTTON_PIN_1) == LOW) && (digitalRead(BUTTON_PIN_1) == LOW) != Button_1_state){
+ 
+  }
+  Button_1_state = (digitalRead(BUTTON_PIN_1) == LOW);  
 }

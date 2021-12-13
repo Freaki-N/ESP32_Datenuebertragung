@@ -1,9 +1,7 @@
 //created by Freaki_N
-//Last Update: 12.12.2021
+//Last Update: 13.12.2021
 
-const int PROTOCOL_INPUT_PIN = 25;
-const int PROTOCOL_OUTPUT_PIN = 27;
-const int device_id = 1;
+include "values.cpp"
 
 const int TIME_PAUSE = 2;
 const int TIME_START = 15;
@@ -12,12 +10,6 @@ const int TIME_NEXT_VALUE = 10;
 const int TIME_VALUE = 2;
 
 const int MAX_DATAGRAMMS_WAITING = 20;
-
-const int LED_PIN_1 = 21;
-
-const int BUTTON_PIN_1 = 22;
-boolean Button_1_state = false;
-boolean Button_1_toggle = false;
 
 boolean last_state = false;
 int last_state_start = 0;
@@ -401,14 +393,6 @@ void processData(Datagramm data_input){
   }
 }
 
-void readData(int _sender, int _packet){
-  if(_packet == 2){
-    digitalWrite(LED_PIN_1, HIGH);
-  }else if(_packet == 3){
-    digitalWrite(LED_PIN_1, LOW);
-  }
-}
-
 void send_pause(){
   digitalWrite(PROTOCOL_OUTPUT_PIN, LOW);
   delayAndReceive(TIME_PAUSE);
@@ -485,18 +469,5 @@ void setup() {
 void loop() {
   receive();
   sendData();
-
-  if((digitalRead(BUTTON_PIN_1) == LOW) && (digitalRead(BUTTON_PIN_1) == LOW) != Button_1_state){
-    Button_1_toggle = !Button_1_toggle;
-    if (Button_1_toggle) {
-      dataToSend.add(Datagramm(device_id, 0, 2));
-    }else{
-      dataToSend.add(Datagramm(device_id, 0, 3));
-    }
-  }
-
-  if(!(digitalRead(BUTTON_PIN_1) == LOW) && (digitalRead(BUTTON_PIN_1) == LOW) != Button_1_state){
-
-  }
-  Button_1_state = (digitalRead(BUTTON_PIN_1) == LOW);
+  loop2();
 }

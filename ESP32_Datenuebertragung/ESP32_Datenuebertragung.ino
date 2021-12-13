@@ -17,6 +17,7 @@ const int LED_PIN_1 = 21;
 
 const int BUTTON_PIN_1 = 22;
 boolean Button_1_state = false;
+boolean Button_1_toggle = false;
 
 boolean last_state = false;
 int last_state_start = 0;
@@ -376,7 +377,7 @@ void receive(){
     dataToSend.add(receivedData);
   }
 
-  if(Serial.available() > 0){
+  /*Üif(Serial.available() > 0){
     String input_serial = Serial.readStringUntil('\n');
     String input_text = "";
 
@@ -389,7 +390,7 @@ void receive(){
         input_text = input_text + curChar;
       }
     }
-  }
+  }*/
 }
 
 void processData(Datagramm data_input){
@@ -401,9 +402,9 @@ void processData(Datagramm data_input){
 }
 
 void readData(int _sender, int _packet){
-  if(_packet == 1){
+  if(_packet == 2){
     digitalWrite(LED_PIN_1, HIGH);
-  }else if(_packet == 2){
+  }else if(_packet == 3){
     digitalWrite(LED_PIN_1, LOW);
   }
 }
@@ -486,6 +487,15 @@ void loop() {
   sendData();
 
   if((digitalRead(BUTTON_PIN_1) == LOW) && (digitalRead(BUTTON_PIN_1) == LOW) != Button_1_state){
+    Button_1_toggle = !Button_1_toggle;
+    if (Button_1_toggle) {
+      dataToSend.add(Datagramm(device_id, 0, 2));
+    }else{
+      dataToSend.add(Datagramm(device_id, 0, 3);
+    }
+  }
+
+  if(!(digitalRead(BUTTON_PIN_1) == LOW) && (digitalRead(BUTTON_PIN_1) == LOW) != Button_1_state){
 
   }
   Button_1_state = (digitalRead(BUTTON_PIN_1) == LOW);

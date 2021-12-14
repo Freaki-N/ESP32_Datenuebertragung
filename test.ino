@@ -1,4 +1,4 @@
-
+/*
 void send(String text){
   
 }
@@ -12,4 +12,4 @@ void loop(){
     Button_1_toggle = !Button_1_toggle;
   }
   Button_1_state = (digitalRead(BUTTON_PIN_1) == LOW);
-}
+}*/

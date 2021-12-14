@@ -396,7 +396,7 @@ void receive(){
 void processData(Datagramm data_input){
   if(receivedData.getAddr() == device_id){
     readData(receivedData.getSender(), receivedData.getPacklength());
-  }else{
+  }else if(receivedData.getSender() != device_id){
     dataToSend.add(receivedData);
   }
 }

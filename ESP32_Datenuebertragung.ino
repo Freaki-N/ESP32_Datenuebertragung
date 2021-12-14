@@ -343,12 +343,12 @@ void sendData(){
   }else if(dataToSend.isAvailable()){
     sendingData = dataToSend.getNext();
     sendingData.startSending();
-    Serial.println("Addr: " + String(sendingData.getAddr()) + "; Sender" + String(sendingData.getSender()) + "; Pack: " + String(sendingData.getPacklength()));
+    Serial.println("Sending: Addr: " + String(sendingData.getAddr()) + "; Sender: " + String(sendingData.getSender()) + "; Pack: " + String(sendingData.getPacklength()));
   }
 }
 
 void receive(){
-  boolean state_input = (digitalRead(PROTOCOL_INPUT_PIN) == LOW);
+  boolean state_input = (digitalRead(PROTOCOL_INPUT_PIN) == HIGH);
 
   if(state_input && !dataAvailable){
     dataAvailable = true;
@@ -357,6 +357,7 @@ void receive(){
     receivedData = Datagramm();
   }else if((last_state != state_input) && dataAvailable){
     int duration = millis()-last_state_start;
+    Serial.println("Receiving: " + String(last_state) + " in " + String(duration) + "ms");
     if (!receivedData.receive(last_state, duration)){
       dataAvailable = false;
       processData(receivedData);
@@ -383,7 +384,7 @@ void receive(){
 }
 
 void processData(Datagramm data_input){
-  Serial.println("Addr: " + String(receivedData.getAddr()) + "; Sender" + String(receivedData.getSender()) + "; Pack: " + String(receivedData.getPacklength()));
+  Serial.println("Receiving: Addr: " + String(receivedData.getAddr()) + "; Sender: " + String(receivedData.getSender()) + "; Pack: " + String(receivedData.getPacklength()));
   if(receivedData.getAddr() == device_id){
     readData(receivedData.getSender(), receivedData.getPacklength());
   }else if(receivedData.getSender() != device_id){
@@ -460,9 +461,14 @@ void setup() {
   /*for(int i=0; i < 3; i++){
     dataToSend.add(Datagramm(3, 3, 10));
   }*/
-  dataToSend.add(Datagramm(device_id, 0, 1));
+  //dataToSend.add(Datagramm(device_id, 0, 1));
 
   Serial.begin(9600);
+
+  Datagramm test;
+  test = Datagramm(device_id, 3, 3);
+
+  Serial.println("Test: Addr: " + String(test.getAddr()) + "; Sender: " + String(test.getSender()) + "; Pack: " + String(test.getPacklength()));
 }
 
 void loop() {
@@ -472,9 +478,9 @@ void loop() {
   if((digitalRead(BUTTON_PIN_1) == LOW) && (digitalRead(BUTTON_PIN_1) == LOW) != Button_1_state){
     Button_1_toggle = !Button_1_toggle;
     if (Button_1_toggle) {
-      dataToSend.add(Datagramm(device_id, 0, 2));
+      dataToSend.add(Datagramm(device_id, 3, 2));
     }else{
-      dataToSend.add(Datagramm(device_id, 0, 3));
+      dataToSend.add(Datagramm(device_id, 3, 3));
     }
   }
 

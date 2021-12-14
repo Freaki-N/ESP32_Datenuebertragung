@@ -1,6 +1,8 @@
 //created by Freaki_N
 //Last Update: 13.12.2021
 
+#include "protocol_classes.cpp"
+
 const int PROTOCOL_INPUT_PIN = 25;
 const int PROTOCOL_OUTPUT_PIN = 27;
 

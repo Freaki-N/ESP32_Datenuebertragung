@@ -1,6 +1,8 @@
 //created by Freaki_N
 //Last Update: 14.12.2021
 
+#include "values.cpp"
+
 const int TIME_PAUSE = 2;
 const int TIME_START = 15;
 const int TIME_END = 20;

@@ -222,7 +222,6 @@ void Datagramm::set_pause(){
   time_stop_sending = time_last_send + TIME_PAUSE;
   last_state_sending = false;
   digitalWrite(PROTOCOL_OUTPUT_PIN, LOW);
-  Serial.println("Sending Pause: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 void Datagramm::set_start(){
@@ -230,7 +229,6 @@ void Datagramm::set_start(){
   time_stop_sending = time_last_send + TIME_START;
   last_state_sending = true;
   digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
-  Serial.println("Sending Start: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 void Datagramm::set_end(){
@@ -238,7 +236,6 @@ void Datagramm::set_end(){
   time_stop_sending = time_last_send + TIME_END;
   last_state_sending = true;
   digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
-  Serial.println("Sending End: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 void Datagramm::set_next_value(){
@@ -246,7 +243,6 @@ void Datagramm::set_next_value(){
   time_stop_sending = time_last_send + TIME_NEXT_VALUE;
   last_state_sending = true;
   digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
-  Serial.println("Sending Next Value: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 void Datagramm::set_value(){
@@ -254,7 +250,6 @@ void Datagramm::set_value(){
   time_stop_sending = time_last_send + TIME_VALUE;
   last_state_sending = true;
   digitalWrite(PROTOCOL_OUTPUT_PIN, HIGH);
-  Serial.println("Sending Value: " + String(time_stop_sending-time_last_send) + "ms" + "; state_send: " + String(state_send));
 }
 
 
@@ -268,19 +263,15 @@ void Datagramm::set_value(){
     DatagrammListNode next;
     Datagramm datagramm;
 };
-
 DatagrammListNode::DatagrammListNode(Datagramm _datagramm){
   datagramm = _datagramm;
 }
-
 Datagramm DatagrammListNode::getDatagramm(){
   return datagramm;
 }
-
 DatagrammListNode DatagrammListNode::deleteNext(){
   return next;
 }
-
 void DatagrammListNode::add(Datagramm newDatagramm){
   if(next == null){
     next = DatagrammListNode(newDatagramm);
@@ -352,6 +343,7 @@ void sendData(){
   }else if(dataToSend.isAvailable()){
     sendingData = dataToSend.getNext();
     sendingData.startSending();
+    Serial.println("Addr: " + String(sendingData.getAddr()) + "; Sender" + String(sendingData.getSender()) + "; Pack: " + String(sendingData.getPacklength()));
   }
 }
 
@@ -380,12 +372,9 @@ void receive(){
   /*Üif(Serial.available() > 0){
     String input_serial = Serial.readStringUntil('\n');
     String input_text = "";
-
     for(int i=0; i < sizeof(input_serial); i++){
       char curChar = input_serial[i];
-
       if(curChar == ' '){
-
       }else{
         input_text = input_text + curChar;
       }
@@ -394,6 +383,7 @@ void receive(){
 }
 
 void processData(Datagramm data_input){
+  Serial.println("Addr: " + String(receivedData.getAddr()) + "; Sender" + String(receivedData.getSender()) + "; Pack: " + String(receivedData.getPacklength()));
   if(receivedData.getAddr() == device_id){
     readData(receivedData.getSender(), receivedData.getPacklength());
   }else if(receivedData.getSender() != device_id){
@@ -440,37 +430,30 @@ void send_value(){
     int sender = sendingData.getSender();
     int addr = sendingData.getAddr();
     int packet_length = sendingData.getPacklength();
-
     send_start();
     send_pause();
-
     for(int i=0; i < sender; i++){
         send_value();
         send_pause();
     }
-
     send_pause();
     send_next_value();
-
     for(int i=0; i < addr; i++){
         send_value();
         send_pause();
     }
-
     send_pause();
     send_next_value();
-
     for(int i=0; i < packet_length; i++){
         send_value();
         send_pause();
     }
-
     send_end();
   }
 }*/
 
 void setup() {
-  pinMode(PROTOCOL_INPUT_PIN, INPUT_PULLUP);
+  pinMode(PROTOCOL_INPUT_PIN, INPUT_PULLDOWN);
   pinMode(PROTOCOL_OUTPUT_PIN, OUTPUT);
   pinMode(BUTTON_PIN_1, INPUT_PULLUP);
   pinMode(LED_PIN_1, OUTPUT);

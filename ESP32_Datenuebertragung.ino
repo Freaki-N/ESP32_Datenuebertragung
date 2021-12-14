@@ -1,5 +1,5 @@
 //created by Freaki_N
-//Last Update: 12.12.2021
+//Last Update: 14.12.2021
 
 const int PROTOCOL_INPUT_PIN = 25;
 const int PROTOCOL_OUTPUT_PIN = 27;

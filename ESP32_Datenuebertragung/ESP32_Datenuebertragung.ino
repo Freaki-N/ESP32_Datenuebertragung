@@ -3,12 +3,6 @@
 
 #include "values.cpp"
 
-const int TIME_PAUSE = 2;
-const int TIME_START = 15;
-const int TIME_END = 20;
-const int TIME_NEXT_VALUE = 10;
-const int TIME_VALUE = 2;
-
 const int MAX_DATAGRAMMS_WAITING = 20;
 
 boolean last_state = false;

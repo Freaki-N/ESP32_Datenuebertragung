@@ -3,9 +3,6 @@
 
 #include "protocol_classes.cpp"
 
-const int PROTOCOL_INPUT_PIN = 25;
-const int PROTOCOL_OUTPUT_PIN = 27;
-
 const int device_id = 1;
 
 const int LED_PIN_1 = 21;
